@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  fluentbit:
+      image: fluent/fluent-bit:latest
+      restart: always
+      volumes:
+        - ./fluent-bit/etc:/fluent-bit/etc
+        - /home/apps/logstest/rsys.log:/tmp/logstest/rsys.log
+      ports:
+        - "24224:24224"
+        - "24224:24224/udp"

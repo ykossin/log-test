@@ -1,0 +1,79 @@
+version: '3'
+services:
+
+    # MongoDB: https://hub.docker.com/_/mongo/
+    mongo:
+        image: mongo:3
+        networks:
+            - graylog
+
+    elasticsearch:
+        image: elasticsearch:6.8.23
+        container_name: elasticsearch
+        ports:
+            - "9200:9200"
+        restart: always
+        volumes:
+            - ./es_data:/usr/share/elasticsearch/data:rw
+            - /etc/localtime:/etc/localtime
+        environment:
+            - http.host=0.0.0.0
+            - transport.host=localhost
+            - network.host=0.0.0.0
+            - xpack.security.enabled=false
+            - xpack.ml.enabled=false
+            - xpack.graph.enabled=false
+            - xpack.watcher.enabled=false
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        mem_limit: 1g
+        networks:
+            - graylog
+
+    # Graylog: https://hub.docker.com/r/graylog/graylog/
+    # Graylog: I want to have the lastest
+    graylog:
+        image: graylog/graylog:4.3
+        restart: always
+        volumes:
+            - ./graylog_data:/usr/share/graylog/data/journal:rw
+            - /etc/localtime:/etc/localtime
+          # - /home/MYUSER/graylog-data/plugin/graylog-plugin-telegram-notification-2.3.0.jar:/usr/share/graylog/plugin/graylog-plugin-telegram-notification-2.3.0.jar
+        environment:
+            # CHANGE ME (must be at least 16 characters)!
+            - GRAYLOG_PASSWORD_SECRET=xxxxxxxxxxxxxxxxx
+            # Password: admin
+            - GRAYLOG_ROOT_PASSWORD_SHA2=xxxxxxxxxxxxxxxxx
+            - GRAYLOG_HTTP_BIND_ADDRESS=0.0.0.0:9999
+            - GRAYLOG_WEB_LISTEN_URI=http://xxx.xxx.xxx.xxx:9999/
+            - GRAYLOG_HTTP_EXTERNAL_URI=http://xxx.xxx.xxx.xxx:9999/
+            - GRAYLOG_HTTP_PUBLISH_URI=http://xxx.xxx.xxx.xxx:9999/
+            - GRAYLOG_ROOT_TIMEZONE=Europe/Moscow
+            - GRAYLOG_PLUGIN_DIR=plugin
+        links:
+            - mongo
+            - elasticsearch
+        depends_on:
+            - mongo
+            - elasticsearch
+        ports:
+            - 5044:5044
+            # Graylog web interface and REST API
+            - 9999:9999
+            # Syslog TCP
+            - 1514:1514
+            # Syslog UDP
+            - 1514:1514/udp
+            # GELF TCP
+            - 12201:12201
+            # GELF UDP
+            - 12201:12201/udp
+        networks:
+            - graylog
+
+networks:
+    graylog:
+        driver: bridge

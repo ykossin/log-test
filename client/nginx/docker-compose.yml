@@ -1,0 +1,18 @@
+version: '3'
+services:
+  web:
+    image: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/templates:/etc/nginx/templates
+      - ./nginx/log/nginx:/var/log/nginx
+    ports:
+      - "8080:80"
+    environment:
+      - NGINX_HOST=foobar.com
+      - NGINX_PORT=80
+    logging:
+      driver: syslog
+      options:
+        syslog-format: "rfc3164"
+        tag: "nginx-tst"
